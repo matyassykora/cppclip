@@ -49,7 +49,7 @@ public:
   void printHelp() {
     std::cout << "Usage: " << programName << " [-h] ";
     std::vector<int> positionalIDs;
-    for (const auto &i : a) {
+    for (const std::pair<const int, argument> &i : a) {
       if (i.second.positional) {
         positionalIDs.push_back(i.first);
         std::cout << i.second.options.front();
@@ -69,17 +69,17 @@ public:
     if (!positionalIDs.empty()) {
       std::cout << "\n\nPositional arguments:\n";
       for (const int &i : positionalIDs) {
-        std::stringstream positional;
-        positional << "  ";
+        std::stringstream positionalStream;
+        positionalStream << "  ";
         int k = 0;
-        for (const auto &j : a[i].options) {
-          positional << j;
+        for (const std::string &j : a[i].options) {
+          positionalStream << j;
           k++;
           if (k != a[i].options.size()) {
-            positional << ", ";
+            positionalStream << ", ";
           }
         }
-        std::cout << std::setw(30) << std::left << positional.str()
+        std::cout << std::setw(30) << std::left << positionalStream.str()
                   << std::right << a[i].helpMessage << "\n";
       }
 
@@ -91,29 +91,29 @@ public:
     std::cout << std::setw(30) << std::left << "  -h, --help" << std::left
               << "show help and exit\n";
 
-    for (const auto &i : a) {
-      std::stringstream firstStream;
-      std::stringstream secondStream;
-      firstStream << "  ";
+    for (const std::pair<const int, argument> &i : a) {
+      std::stringstream optionStream;
+      std::stringstream helpStream;
+      optionStream << "  ";
       for (int j = 0; j < i.second.options.size(); j++) {
         if (i.second.positional) {
           continue;
         }
-        firstStream << i.second.options.at(j);
+        optionStream << i.second.options.at(j);
         if (j != i.second.options.size() - 1) {
-          firstStream << ", ";
+          optionStream << ", ";
         }
       }
 
       if (i.second.helpMessage.empty()) {
-        std::cout << std::setw(30) << std::left << firstStream.str() << "\n";
+        std::cout << std::setw(30) << std::left << optionStream.str() << "\n";
       } else {
         if (i.second.positional) {
           continue;
         }
-        secondStream << i.second.helpMessage << "\n";
-        std::cout << std::setw(30) << std::left << firstStream.str()
-                  << std::right << secondStream.str();
+        helpStream << i.second.helpMessage << "\n";
+        std::cout << std::setw(30) << std::left << optionStream.str()
+                  << std::right << helpStream.str();
       }
     }
 
@@ -140,14 +140,14 @@ public:
     // std::vector<std::string> input = {args...};
 
     int id = mapIDFromArgs(args...);
-    const auto &abc = a[id];
-    int nargs = abc.nargs;
+    const auto &map = a[id];
+    int nargs = map.nargs;
     if (id == -1) {
       std::cout << "These arguments don't exist!\n";
       exit(1);
     }
 
-    for (const auto &option : abc.options) {
+    for (const std::string &option : map.options) {
       iter = std::find(this->args.begin(), this->args.end(), option);
       for (int i = 0; i < nargs; i++) {
         if (iter != this->args.end() && ++iter != this->args.end()) {
@@ -167,8 +167,8 @@ private:
     std::vector<std::string> input = {args...};
     std::vector<std::string>::const_iterator iter;
 
-    for (const auto &i : a) {
-      for (const auto &j : input) {
+    for (const std::pair<const int, argument> &i : a) {
+      for (const std::string &j : input) {
         const std::vector<std::string> &opts = i.second.options;
         iter = std::find(opts.begin(), opts.end(), j);
         if (iter != opts.end()) {
@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
   input.add("--verbose");
   input.add("-v", "--version").help("show version and exit");
 
-  auto b = input.getArgsAfter("-a", "--anything");
+  const std::vector b = input.getArgsAfter("-a", "--anything");
   for (auto c : b) {
     std::cout << c << "\n";
   }
