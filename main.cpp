@@ -137,7 +137,6 @@ public:
   std::vector<std::string> getArgsAfter(Args... args) {
     std::vector<std::string> arguments;
     std::vector<std::string>::const_iterator iter;
-    // std::vector<std::string> input = {args...};
 
     int id = mapIDFromArgs(args...);
     const auto &map = a[id];
