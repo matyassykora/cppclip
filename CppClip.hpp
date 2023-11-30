@@ -1,5 +1,8 @@
+#pragma once
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -11,6 +14,7 @@ public:
     this->programName = programName;
   };
 
+  // FIX: needing to add arguments in reverse?
   ArgumentParser &add(const std::string &option,
                       const std::string &longOpt = "") {
     id++;
@@ -91,7 +95,7 @@ public:
       }
       for (int j = 0; j < i.second.nargs; j++) {
         if (positionalIndex >= all.size()) {
-          std::cout << "\nNot enough arguments to \"" << i.second.positionalOpt
+          std::cout << "Not enough arguments to \"" << i.second.positionalOpt
                     << "\"!\n";
           exit(1);
         }
@@ -147,8 +151,33 @@ public:
       std::cout << "\n" << description << "\n";
     }
 
-    // std::cout << std::setw(30) << std::left << "  -h, --help" << std::left
-    //           << "show help and exit\n";
+    std::cout << "\nOptions:\n";
+    for (const auto &i : a) {
+      std::stringstream optionStream;
+      std::stringstream helpStream;
+      optionStream << "  " << i.second.shortOpt;
+      if (!i.second.longOpt.empty()) {
+        optionStream << ", " << i.second.longOpt;
+      }
+
+      if (i.second.isPositional) {
+        continue;
+      }
+      std::cout << std::setw(30) << std::left << optionStream.str()
+                << std::right << i.second.helpMessage << "\n";
+    }
+
+    std::cout << "\nPositional arguments:\n";
+    for (const auto &i : a) {
+      std::stringstream positional;
+      if (!i.second.isPositional) {
+        continue;
+      }
+      positional << "  " << i.second.positionalOpt << " (" << i.second.nargs
+                 << ')';
+      std::cout << std::setw(30) << std::left << positional.str() << std::right
+                << i.second.helpMessage << "\n";
+    }
 
     if (!this->epilogue.empty()) {
       std::cout << '\n' << this->epilogue << "\n";
