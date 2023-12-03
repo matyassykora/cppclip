@@ -20,6 +20,7 @@ private:
   std::string m_message;
 };
 
+// TODO: split this up into multiple classes (separate the responsibilitites to make testing easier & the code cleaner)
 class ArgumentParser {
 private:
   struct argument {
@@ -50,6 +51,20 @@ public:
       throw Exception("You must add at least one argument");
     }
 
+    // both long and short
+    if (!longOpt.empty()) {
+      if (longOpt.find("--") == std::string::npos) {
+        throw Exception("Long option must start with --");
+      }
+      if (option.find("--") != std::string::npos) {
+        throw Exception("When setting both options, the first option must not start with --");
+      }
+      argumentMap[currentArgumentID].shortOpt = option;
+      argumentMap[currentArgumentID].longOpt = longOpt;
+      return *this;
+    }
+
+
     currentArgumentID++;
 
     if (isPositionalOpt(option)) {
@@ -65,19 +80,15 @@ public:
       return *this;
     }
 
-    // both long and short
-    if (!longOpt.empty()) {
-      argumentMap[currentArgumentID].shortOpt = option;
-      argumentMap[currentArgumentID].longOpt = longOpt;
-      return *this;
-    }
+
 
     // only short
     if (!option.empty()) {
       argumentMap[currentArgumentID].shortOpt = option;
+      return *this;
     }
 
-    return *this;
+    throw Exception("Something went wrong when adding an argument");
   }
 
   ArgumentParser &help(const std::string &message) {
@@ -99,7 +110,7 @@ public:
   }
 
   // TODO: improve checking whether the option is positional
-  bool isPositionalOpt(const std::string &option) {
+  static bool isPositionalOpt(const std::string &option) {
     return option.at(0) != '-';
   }
 
@@ -140,7 +151,9 @@ public:
       }
       for (int j = 0; j < pair.second.nargs; j++) {
         if (positionalIndex >= all.size()) {
-          throw Exception("Not enough arguments to " + pair.second.positionalOpt);
+          // TODO: maybe do this instead of continuing?
+          // => throw Exception("Not enough arguments to " + pair.second.positionalOpt);
+          continue;
         }
         vec.push_back(all.at(positionalIndex));
         positionalIndex++;
@@ -148,6 +161,15 @@ public:
     }
 
     return vec;
+  }
+
+  bool existsInMap(const std::string &option) {
+    for (const auto &pair: argumentMap) {
+      if (option == pair.second.shortOpt || option == pair.second.longOpt || option == pair.second.positionalOpt) {
+        return true;
+      }
+    }
+    return false;
   }
 
   bool isSet(const std::string &option) {
@@ -268,6 +290,16 @@ public:
     return vec;
   }
 
+  argument &getArgument(int id) {
+    if (id < 0 || id >= argumentMap.size()) {
+      throw Exception("ID out of range");
+    }
+    if (argumentMap.count(id) == 0) {
+      throw Exception("ID does not exist");
+    }
+    return argumentMap.at(id);
+  }
+
 private:
   int mapIDFromOpt(const std::string &option) {
     auto it = std::find_if(argumentMap.begin(), argumentMap.end(), [&](const auto &pair) {
@@ -277,16 +309,6 @@ private:
       return it->first;
     }
     return -1;
-  }
-
-  argument &getArgument(int id) {
-    if (id < 0 || id >= argumentMap.size()) {
-      throw Exception("ID out of range");
-    }
-    if (argumentMap.count(id) == 0) {
-      throw Exception("ID does not exist");
-    }
-    return argumentMap.at(id);
   }
 
   std::vector<std::string> getAllPositional() {
