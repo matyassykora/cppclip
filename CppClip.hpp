@@ -52,6 +52,8 @@ public:
       throw Exception("You must add at least one argument");
     }
 
+    currentArgumentID++;
+
     // both long and short
     if (!longOpt.empty()) {
       if (longOpt.find("--") == std::string::npos) {
@@ -64,9 +66,6 @@ public:
       argumentMap[currentArgumentID].longOpt = longOpt;
       return *this;
     }
-
-
-    currentArgumentID++;
 
     if (isPositionalOpt(option)) {
       argumentMap[currentArgumentID].positionalOpt = option;
@@ -203,12 +202,19 @@ public:
   }
 
   void printShortOptions() {
+    std::cout << "[-";
     for (const auto &pair: argumentMap) {
       if (pair.second.shortOpt.empty()) {
         continue;
       }
-      std::cout << "[" << pair.second.shortOpt << "] ";
+      for (const char &c: pair.second.shortOpt) {
+        if (c == '-') {
+          continue;
+        }
+        std::cout << c;
+      }
     }
+    std::cout << "] ";
   }
 
   void printLongOptions() {
@@ -222,6 +228,10 @@ public:
   void printPositionalOptions() {
     for (const auto &pair: argumentMap) {
       if (pair.second.positionalOpt.empty()) {
+        continue;
+      }
+      if (pair.second.isOptional) {
+        std::cout << "[" << pair.second.positionalOpt << "] ";
         continue;
       }
       std::cout << pair.second.positionalOpt << " ";
@@ -257,7 +267,12 @@ public:
       if (!pair.second.isPositional) {
         continue;
       }
-      positional << "  " << pair.second.positionalOpt << " (" << pair.second.nargs
+      if (pair.second.isOptional) {
+        positional << "  [" << pair.second.positionalOpt << "]";
+      } else {
+        positional << "  " << pair.second.positionalOpt;
+      }
+      positional << " (" << pair.second.nargs
                  << ')';
       std::cout << std::setw(30) << std::left << positional.str() << std::right
                 << pair.second.helpMessage << '\n';
