@@ -20,7 +20,7 @@ private:
   std::string m_message;
 };
 
-// TODO: split this up into multiple classes (separate the responsibilitites to make testing easier & the code cleaner)
+// TODO: split this up into multiple classes (separate the responsibilities to make testing easier & the code cleaner)
 class ArgumentParser {
 private:
   struct argument {
