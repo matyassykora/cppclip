@@ -31,6 +31,7 @@ private:
     std::vector<std::string> options;
     std::string helpMessage;
     bool isPositional = false;
+    bool isOptional = true;
     int nargs = 0;
     std::string metavar;
     std::vector<std::string> data;
@@ -106,6 +107,7 @@ public:
     auto &arg = getArgument(currentArgumentID);
     arg.nargs = nargs;
     arg.isPositional = true;
+    arg.isOptional = false;
     return *this;
   }
 
@@ -150,10 +152,11 @@ public:
         continue;
       }
       for (int j = 0; j < pair.second.nargs; j++) {
-        if (positionalIndex >= all.size()) {
-          // TODO: maybe do this instead of continuing?
-          // => throw Exception("Not enough arguments to " + pair.second.positionalOpt);
+        if (positionalIndex >= all.size() && pair.second.isOptional) {
           continue;
+        }
+        if (positionalIndex >= all.size() && !pair.second.isOptional) {
+          throw Exception("Not enough arguments to " + pair.second.positionalOpt);
         }
         vec.push_back(all.at(positionalIndex));
         positionalIndex++;
