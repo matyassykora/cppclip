@@ -202,6 +202,9 @@ public:
   }
 
   void printShortOptions() {
+    if (argumentMap.empty()) {
+      return;
+    }
     std::cout << "[-";
     for (const auto &pair: argumentMap) {
       if (pair.second.shortOpt.empty()) {

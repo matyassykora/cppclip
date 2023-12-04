@@ -24,6 +24,7 @@ add_executable(cppclip
         main.cpp
         tests/help_test.cpp
         tests/nargs_test.cpp
-        tests/add_test.cpp)
+        tests/add_test.cpp
+        tests/print_test.cpp)
 
 target_link_libraries(cppclip gtest_main gmock_main)
