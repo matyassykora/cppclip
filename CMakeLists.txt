@@ -28,3 +28,7 @@ add_executable(cppclip
         )
 
 target_link_libraries(cppclip gtest_main gmock_main)
+
+enable_testing()
+include(GoogleTest)
+gtest_discover_tests(tests)
