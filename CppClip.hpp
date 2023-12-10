@@ -5,54 +5,50 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 class Exception : public std::exception {
 public:
-  explicit Exception(const std::string &message) : m_message(message) {}
+  explicit Exception(std::string_view message) : m_message(message) {}
 
-  const char *what() const noexcept override {
-    return m_message.c_str();
-  }
+  const char *what() const noexcept override { return m_message.c_str(); }
 
 private:
   std::string m_message;
 };
 
-// TODO: split this up into multiple classes (separate the responsibilities to make testing easier & the code cleaner)
+struct argument {
+  std::string shortOpt;
+  std::string longOpt;
+  std::string positionalOpt;
+  std::string helpMessage;
+  int nargs = 0;
+  bool isSet = false;
+  bool isPositional = false;
+  bool isOptional = true;
+};
+
 class ArgumentParser {
-private:
-  struct argument {
-    std::string shortOpt;
-    bool isSet = false;
-    std::string longOpt;
-    std::string positionalOpt;
-    std::vector<std::string> options;
-    std::string helpMessage;
-    bool isPositional = false;
-    bool isOptional = true;
-    int nargs = 0;
-    std::string metavar;
-    std::vector<std::string> data;
-  };
 
 public:
   ~ArgumentParser() = default;
 
-  explicit ArgumentParser(const std::string &programName) {
+  explicit ArgumentParser(std::string_view programName) {
     this->programName = programName;
   };
 
   // FIX: needing to add arguments in reverse order
-  ArgumentParser &add(const std::string &option,
-                      const std::string &longOpt = "") {
+  ArgumentParser &add(const std::string_view option,
+                      const std::string_view longOpt = "") {
 
     if (option.empty()) {
       throw Exception("You must add at least one argument");
     }
 
     currentArgumentID++;
+    auto &argument = argumentMap[currentArgumentID];
 
     // both long and short
     if (!longOpt.empty()) {
@@ -60,38 +56,37 @@ public:
         throw Exception("Long option must start with --");
       }
       if (option.find("--") != std::string::npos) {
-        throw Exception("When setting both options, the first option must not start with --");
+        throw Exception("When setting both options, the first option must not "
+                        "start with --");
       }
-      argumentMap[currentArgumentID].shortOpt = option;
-      argumentMap[currentArgumentID].longOpt = longOpt;
+      argument.shortOpt = option;
+      argument.longOpt = longOpt;
       return *this;
     }
 
     if (isPositionalOpt(option)) {
-      argumentMap[currentArgumentID].positionalOpt = option;
-      argumentMap[currentArgumentID].isPositional = true;
-      argumentMap[currentArgumentID].nargs = 1;
+      argument.positionalOpt = option;
+      argument.isPositional = true;
+      argument.nargs = 1;
       return *this;
     }
 
     // only long
     if (option.find("--") != std::string::npos) {
-      argumentMap[currentArgumentID].longOpt = option;
+      argument.longOpt = option;
       return *this;
     }
 
-
-
     // only short
     if (!option.empty()) {
-      argumentMap[currentArgumentID].shortOpt = option;
+      argument.shortOpt = option;
       return *this;
     }
 
     throw Exception("Something went wrong when adding an argument");
   }
 
-  ArgumentParser &help(const std::string &message) {
+  ArgumentParser &help(std::string_view message) {
     if (message.empty()) {
       return *this;
     }
@@ -99,7 +94,7 @@ public:
     return *this;
   }
 
-  ArgumentParser &nargs(int nargs) {
+  ArgumentParser &nargs(const int &nargs) {
     if (nargs <= 0) {
       throw Exception("Number of arguments must be >0");
     }
@@ -111,51 +106,55 @@ public:
   }
 
   // TODO: improve checking whether the option is positional
-  static bool isPositionalOpt(const std::string &option) {
+  static bool isPositionalOpt(std::string_view option) {
     return option.at(0) != '-';
   }
 
-  void addDescription(const std::string &description) {
-    if (description.empty()) { return; }
+  void addDescription(std::string_view description) {
+    if (description.empty()) {
+      return;
+    }
     this->programDescription = description;
   }
 
-  void addEpilogue(const std::string &epilogue) { this->programEpilogue = epilogue; }
+  void addEpilogue(std::string_view epilogue) {
+    this->programEpilogue = epilogue;
+  }
 
   void parse(const int &argc, char **argv) {
     for (int i = 1; i < argc; i++) {
       this->args.emplace_back(argv[i]);
     }
-    for (const auto &arg: args) {
-      for (const char &c: arg) {
-        for (auto &pair: argumentMap) {
-          if (pair.second.shortOpt.size() <= 1) {
+    for (const auto &arg : args) {
+      for (const char &c : arg) {
+        for (auto &[key, opt] : argumentMap) {
+          if (opt.shortOpt.size() <= 1) {
             continue;
           }
-          if (pair.second.shortOpt.at(1) == c) {
-            pair.second.isSet = true;
+          if (opt.shortOpt.at(1) == c) {
+            opt.isSet = true;
           }
         }
       }
     }
   }
 
-  std::vector<std::string> getPositional(const std::string &option) {
+  std::vector<std::string> getPositional(const std::string_view option) {
     std::vector<std::string> vec;
     std::vector<std::string> all = getAllPositional();
-    for (const auto &pair: argumentMap) {
-      if (!pair.second.isPositional) {
+    for (const auto &[key, opt] : argumentMap) {
+      if (!opt.isPositional) {
         continue;
       }
-      if (option != pair.second.positionalOpt) {
+      if (option != opt.positionalOpt) {
         continue;
       }
-      for (int j = 0; j < pair.second.nargs; j++) {
-        if (positionalIndex >= all.size() && pair.second.isOptional) {
+      for (int j = 0; j < opt.nargs; j++) {
+        if (positionalIndex >= all.size() && opt.isOptional) {
           continue;
         }
-        if (positionalIndex >= all.size() && !pair.second.isOptional) {
-          throw Exception("Not enough arguments to " + pair.second.positionalOpt);
+        if (positionalIndex >= all.size() && !opt.isOptional) {
+          throw Exception("Not enough arguments to " + opt.positionalOpt);
         }
         vec.push_back(all.at(positionalIndex));
         positionalIndex++;
@@ -165,29 +164,30 @@ public:
     return vec;
   }
 
-  bool existsInMap(const std::string &option) {
-    for (const auto &pair: argumentMap) {
-      if (option == pair.second.shortOpt || option == pair.second.longOpt || option == pair.second.positionalOpt) {
+  bool existsInMap(const std::string_view option) {
+    for (const auto &[key, opt] : argumentMap) {
+      if (option == opt.shortOpt || option == opt.longOpt ||
+          option == opt.positionalOpt) {
         return true;
       }
     }
     return false;
   }
 
-  bool isSet(const std::string &option) {
-    auto it = std::find_if(argumentMap.begin(), argumentMap.end(), [&](const auto &pair) {
-      return option.size() == pair.second.shortOpt.size() && option == pair.second.shortOpt && pair.second.isSet;
-    });
+  bool isSet(const std::string_view option) {
+    auto it = std::find_if(
+        argumentMap.begin(), argumentMap.end(), [&](const auto &pair) {
+          return option.size() == pair.second.shortOpt.size() &&
+                 option == pair.second.shortOpt && pair.second.isSet;
+        });
     return it != argumentMap.end();
   }
 
   void printHelp() {
     std::cout << "Usage: " << programName << " ";
-
     printShortOptions();
     printLongOptions();
     printPositionalOptions();
-
     std::cout << '\n';
 
     printProgramDescription();
@@ -206,11 +206,11 @@ public:
       return;
     }
     std::cout << "[-";
-    for (const auto &pair: argumentMap) {
+    for (const auto &pair : argumentMap) {
       if (pair.second.shortOpt.empty()) {
         continue;
       }
-      for (const char &c: pair.second.shortOpt) {
+      for (const char &c : pair.second.shortOpt) {
         if (c == '-') {
           continue;
         }
@@ -221,23 +221,23 @@ public:
   }
 
   void printLongOptions() {
-    for (const auto &pair: argumentMap) {
-      if (pair.second.shortOpt.empty() && !pair.second.longOpt.empty()) {
-        std::cout << "[" << pair.second.longOpt << "] ";
+    for (const auto &[key, opt] : argumentMap) {
+      if (opt.shortOpt.empty() && !opt.longOpt.empty()) {
+        std::cout << "[" << opt.longOpt << "] ";
       }
     }
   }
 
   void printPositionalOptions() {
-    for (const auto &pair: argumentMap) {
-      if (pair.second.positionalOpt.empty()) {
+    for (const auto &[key, opt] : argumentMap) {
+      if (opt.positionalOpt.empty()) {
         continue;
       }
-      if (pair.second.isOptional) {
-        std::cout << "[" << pair.second.positionalOpt << "] ";
+      if (opt.isOptional) {
+        std::cout << "[" << opt.positionalOpt << "] ";
         continue;
       }
-      std::cout << pair.second.positionalOpt << " ";
+      std::cout << opt.positionalOpt << " ";
     }
   }
 
@@ -248,37 +248,36 @@ public:
   }
 
   void printOptions() {
-    for (const auto &pair: argumentMap) {
+    for (const auto &[key, opt] : argumentMap) {
       std::stringstream optionStream;
       std::stringstream helpStream;
-      optionStream << "  " << pair.second.shortOpt;
-      if (!pair.second.longOpt.empty()) {
-        optionStream << ", " << pair.second.longOpt;
+      optionStream << "  " << opt.shortOpt;
+      if (!opt.longOpt.empty()) {
+        optionStream << ", " << opt.longOpt;
       }
 
-      if (pair.second.isPositional) {
+      if (opt.isPositional) {
         continue;
       }
       std::cout << std::setw(30) << std::left << optionStream.str()
-                << std::right << pair.second.helpMessage << "\n";
+                << std::right << opt.helpMessage << "\n";
     }
   }
 
   void printPositionalArguments() {
-    for (const auto &pair: argumentMap) {
+    for (const auto &[key, opt] : argumentMap) {
       std::stringstream positional;
-      if (!pair.second.isPositional) {
+      if (!opt.isPositional) {
         continue;
       }
-      if (pair.second.isOptional) {
-        positional << "  [" << pair.second.positionalOpt << "]";
+      if (opt.isOptional) {
+        positional << "  [" << opt.positionalOpt << "]";
       } else {
-        positional << "  " << pair.second.positionalOpt;
+        positional << "  " << opt.positionalOpt;
       }
-      positional << " (" << pair.second.nargs
-                 << ')';
+      positional << " (" << opt.nargs << ')';
       std::cout << std::setw(30) << std::left << positional.str() << std::right
-                << pair.second.helpMessage << '\n';
+                << opt.helpMessage << '\n';
     }
   }
 
@@ -291,7 +290,7 @@ public:
   bool argsEmpty() { return args.empty(); }
 
   // TODO: make sure arguments get correctly consumed after running this
-  std::vector<std::string> getArgsAfter(const std::string &option) {
+  std::vector<std::string> getArgsAfter(const std::string_view option) {
     int id = mapIDFromOpt(option);
     if (id == -1) {
       throw Exception("Thís argument doesn't exist");
@@ -322,19 +321,20 @@ public:
   }
 
 private:
-  int mapIDFromOpt(const std::string &option) {
-    auto it = std::find_if(argumentMap.begin(), argumentMap.end(), [&](const auto &pair) {
-      return pair.second.shortOpt == option;
-    });
+  int mapIDFromOpt(const std::string_view option) {
+    auto it = std::find_if(
+        argumentMap.begin(), argumentMap.end(),
+        [&](const auto &pair) { return pair.second.shortOpt == option; });
+
     if (it != argumentMap.end()) {
       return it->first;
     }
     return -1;
   }
 
-  std::vector<std::string> getAllPositional() {
+  const std::vector<std::string> getAllPositional() {
     std::vector<std::string> vec;
-    for (auto i: args) {
+    for (const auto &i : args) {
       if (i.front() != '-') {
         vec.push_back(i);
       }
@@ -343,8 +343,6 @@ private:
   }
 
 private:
-
-
   int positionalIndex = 0;
 
   std::vector<std::string> args;
