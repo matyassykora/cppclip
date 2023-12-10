@@ -1,27 +1,23 @@
+#include <gtest/gtest.h>
 
+int main(int argc, char *argv[]) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}
+
+/*
 #include "CppClip.hpp"
 #include <cstdlib>
 #include <iostream>
 
 const std::string VERSION = "1.0";
 
-#include <gtest/gtest.h>
-
-// TODO: check this out:
-// https://www.codeproject.com/Tips/5261900/Cplusplus-Lightweight-Parsing-Command-Line-Argumen
-
 int main(int argc, char *argv[]) {
-  /*
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-   */
-
-
   ArgumentParser input("main");
 
   input.addDescription("Test programDescription");
   input.addEpilogue("stuff and things");
-  input.add("subnetmask");
+  input.add("subnetmask").help("The subnet mask");
   input.add("mask").nargs(1);
   input.add("ip").nargs(1);
 
@@ -33,7 +29,7 @@ int main(int argc, char *argv[]) {
   input.parse(argc, argv);
 
   // auto vec = input.getArgsAfter("-argumentMap");
-  // for (auto i : vec) {
+  // for (const auto &i : vec) {
   //   std::cout << i << "\n";
   // }
 
@@ -71,3 +67,4 @@ int main(int argc, char *argv[]) {
   }
 
 }
+*/
