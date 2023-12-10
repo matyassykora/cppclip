@@ -1,1 +1,9 @@
 a.out
+/bin
+/lib
+/build
+/_deps
+/CmakeFiles
+CMakeCache.txt
+cmake_install.cmake
+Makefile

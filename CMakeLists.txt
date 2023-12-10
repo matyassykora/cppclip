@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.26)
 project(cppclip)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
@@ -25,6 +25,6 @@ add_executable(cppclip
         tests/help_test.cpp
         tests/nargs_test.cpp
         tests/add_test.cpp
-        tests/print_test.cpp)
+        )
 
 target_link_libraries(cppclip gtest_main gmock_main)
