@@ -125,17 +125,14 @@ public:
     for (int i = 1; i < argc; i++) {
       this->args.emplace_back(argv[i]);
     }
-    for (const auto &arg : args) {
-      for (const char &c : arg) {
-        for (auto &[key, opt] : argumentMap) {
-          if (opt.shortOpt.size() <= 1) {
-            continue;
-          }
-          if (opt.shortOpt.at(1) == c) {
-            opt.isSet = true;
-          }
-        }
+
+    for (const auto &arg : this->args) {
+      if (arg.find("--") != std::string::npos) {
+        checkUnrecognized(arg);
+        findLong(arg);
+        continue;
       }
+      parseShort(arg);
     }
   }
 
@@ -320,6 +317,8 @@ public:
     return argumentMap.at(id);
   }
 
+  void allowUnrecognized() { unrecognizedAllowed = true; }
+
 private:
   int mapIDFromOpt(const std::string_view option) {
     auto it = std::find_if(
@@ -342,7 +341,47 @@ private:
     return vec;
   }
 
+  void findLong(const std::string &arg) {
+    for (auto &[key, opt] : this->argumentMap) {
+      if (opt.longOpt == arg) {
+        opt.isSet = true;
+      }
+    }
+  }
+
+  void parseShort(const std::string &arg) {
+    if (arg.front() != '-') {
+      return;
+    }
+    for (const char &c : arg) {
+      if (c != '-') {
+        std::string ab(1, '-');
+        ab.append(1, c);
+        checkUnrecognized(std::string(1, '-').append(1, c));
+      }
+      for (auto &[key, opt] : this->argumentMap) {
+        if (opt.shortOpt.size() <= 1) {
+          continue;
+        }
+        if (opt.shortOpt.at(1) == c) {
+          opt.isSet = true;
+        }
+      }
+    }
+  }
+
+  void checkUnrecognized(const std::string &arg) {
+    if (!existsInMap(arg)) {
+      this->unrecognizedFound = true;
+    }
+    if (this->unrecognizedFound && !this->unrecognizedAllowed) {
+      throw Exception("Unrecognized option: " + arg);
+    }
+  }
+
 private:
+  bool unrecognizedFound = false;
+  bool unrecognizedAllowed = false;
   int positionalIndex = 0;
 
   std::vector<std::string> args;
