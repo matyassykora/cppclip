@@ -1,13 +1,5 @@
-#include <gtest/gtest.h>
-
-int main(int argc, char *argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
-
 /*
 #include "CppClip.hpp"
-#include <cstdlib>
 #include <iostream>
 
 const std::string VERSION = "1.0";
@@ -26,45 +18,43 @@ int main(int argc, char *argv[]) {
   input.add("-v", "--version").help("show version and exit");
   input.add("-h", "--help").help("print help and exit");
 
-  input.parse(argc, argv);
-
-  // auto vec = input.getArgsAfter("-argumentMap");
-  // for (const auto &i : vec) {
-  //   std::cout << i << "\n";
-  // }
-
-  if (input.isSet("-h")) {
-    input.printHelp();
-    exit(0);
-  }
-
-  if (input.isSet("-v")) {
-    std::cout << "version: " << VERSION << "\n";
-    exit(0);
-  }
-
   try {
+    input.parse(argc, argv);
+
+    // auto vec = input.getArgsAfter("-argumentMap");
+    // for (const auto &i : vec) {
+    //   std::cout << i << "\n";
+    // }
+
+    if (input.isSet("-h") || input.isSet("--help")) {
+      input.printHelp();
+      exit(0);
+    }
+
+    if (input.isSet("-v") || input.isSet("--version")) {
+      std::cout << "version: " << VERSION << "\n";
+      exit(0);
+    }
+
     auto b = input.getPositional("ip");
     auto c = input.getPositional("mask");
     auto d = input.getPositional("subnetmask");
 
-    for (const auto &i: b) {
+    for (const auto &i : b) {
       std::cout << i << '\n';
     }
 
-    for (const auto &i: c) {
+    for (const auto &i : c) {
       std::cout << i << '\n';
     }
 
-    for (const auto &i: d) {
+    for (const auto &i : d) {
       std::cout << i << '\n';
     }
-  }
-  catch (const std::exception &e) {
+  } catch (const std::exception &e) {
     input.printHelp();
-    std::cout << '\n' << e.what() << '\n';
+    std::cerr << "\nError: " << e.what() << '\n';
     exit(1);
   }
-
 }
 */
