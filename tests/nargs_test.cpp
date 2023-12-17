@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include "CppClip.hpp"
 
+using namespace CppClip;
+
 TEST(ArgumentParserTest, test_nargs_throws_exception_with_non_positive_integer) {
   ArgumentParser parser("test");
 

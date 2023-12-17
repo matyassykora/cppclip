@@ -5,7 +5,7 @@
 const std::string VERSION = "1.0";
 
 int main(int argc, char *argv[]) {
-  ArgumentParser input("main");
+  CppClip::ArgumentParser input("main");
 
   input.addDescription("Test programDescription");
   input.addEpilogue("stuff and things");

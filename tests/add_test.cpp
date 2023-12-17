@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include "CppClip.hpp"
 
+using namespace CppClip;
+
 // Adding a short option without a long option
 TEST(ArgumentParserTest, test_add_short_option_without_long_option) {
   ArgumentParser parser("program");
