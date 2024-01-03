@@ -112,7 +112,6 @@ public:
     return *this;
   }
 
-  // TODO: improve checking whether the option is positional
   static auto isPositionalOpt(std::string_view option) -> bool {
     return option.at(0) != '-';
   }
@@ -143,7 +142,7 @@ public:
     }
   }
 
-  auto getPositional(const std::string_view option)
+  auto getPositional(std::string_view option)
       -> std::vector<std::string> {
     std::vector<std::string> vec;
     std::vector<std::string> all = getAllPositional();
@@ -169,7 +168,7 @@ public:
     return vec;
   }
 
-  auto existsInMap(const std::string_view option) -> bool {
+  auto existsInMap(std::string_view option) -> bool {
     return std::any_of(
         argumentMap.begin(), argumentMap.end(), [&](const auto &pair) {
           return option == pair.second.shortOpt ||
@@ -178,7 +177,7 @@ public:
         });
   }
 
-  auto isSet(const std::string_view option) -> bool {
+  auto isSet(std::string_view option) -> bool {
     auto iter = std::find_if(
         argumentMap.begin(), argumentMap.end(), [&](const auto &pair) {
           return option.size() == pair.second.shortOpt.size() &&
@@ -296,28 +295,6 @@ public:
   }
 
   auto argsEmpty() -> bool { return args.empty(); }
-
-  // TODO: redo this & make sure arguments get correctly consumed after running
-  // it
-  //
-  /* auto getArgsAfter(const std::string_view option) ->
-  std::vector<std::string> { int id = mapIDFromOpt(option); if (id == -1) {
-      throw Exception("Thís argument doesn't exist");
-    }
-    std::vector<std::string> vec;
-    std::vector<std::string>::const_iterator itr;
-
-    const auto &map = argumentMap[id];
-    int nargs = map.nargs;
-
-    itr = std::find(this->args.begin(), this->args.end(), option);
-    for (int i = 0; i < nargs; i++) {
-      if (itr != this->args.end() && ++itr != this->args.end()) {
-        vec.push_back(*itr);
-      }
-    }
-    return vec;
-  } */
 
   auto getArgument(const std::string &option) -> Argument & {
     return argumentMap.at(option);
