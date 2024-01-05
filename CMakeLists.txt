@@ -21,7 +21,6 @@ include_directories(.)
 
 add_executable(cppclip
         CppClip.hpp
-        example.cpp
         tests/help_test.cpp
         tests/nargs_test.cpp
         tests/add_test.cpp

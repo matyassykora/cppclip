@@ -1,7 +1,7 @@
-/*
 #include "CppClip.hpp"
 #include <iostream>
 #include <vector>
+#include <string>
 
 const std::string VERSION = "1.0";
 
@@ -53,4 +53,3 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 }
-*/
