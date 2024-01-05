@@ -28,7 +28,7 @@ parser.addEpilogue("Epilogue");
 ```
 
 ### Add arguments
-The parser uses method chaining to specify parameters for arguments
+The parser uses method chaining to specify parameters for arguments  
 **Arguments must be added in reverse order!** (bottom to top gets processed left to right)
 
 #### Non-optional positional arguments
