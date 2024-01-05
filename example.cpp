@@ -21,17 +21,12 @@ int main(int argc, char *argv[]) {
   try {
     input.parse(argc, argv);
 
-    // auto vec = input.getArgsAfter("-argumentMap");
-    // for (const auto &i : vec) {
-    //   std::cout << i << "\n";
-    // }
-
-    if (input.isSet("-h") || input.isSet("--help")) {
+    if (input.isSet("-h")) {
       input.printHelp();
       exit(0);
     }
 
-    if (input.isSet("-v") || input.isSet("--version")) {
+    if (input.isSet("-v")) {
       std::cout << "version: " << VERSION << "\n";
       exit(0);
     }
