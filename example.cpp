@@ -1,6 +1,7 @@
 /*
 #include "CppClip.hpp"
 #include <iostream>
+#include <vector>
 
 const std::string VERSION = "1.0";
 
@@ -9,14 +10,14 @@ int main(int argc, char *argv[]) {
 
   input.addDescription("Test programDescription");
   input.addEpilogue("stuff and things");
-  input.add("subnetmask").help("The subnet mask");
+  input.add("subnetmask").help("The subnet mask"); // an optional positional argument with help
   input.add("mask").nargs(1);
-  input.add("ip").nargs(1);
+  input.add("ip").nargs(2); // 2 non-optional positional arguments
 
   input.add("-s").help("FDSA");
   // input.add("args").nargs(3);
   input.add("-v", "--version").help("show version and exit");
-  input.add("-h", "--help").help("print help and exit");
+  input.add("-h", "--help").help("print help and exit"); // short & long form
 
   try {
     input.parse(argc, argv);
@@ -31,7 +32,7 @@ int main(int argc, char *argv[]) {
       exit(0);
     }
 
-    auto b = input.getPositional("ip");
+    const std::vector<std::string> &b = input.getPositional("ip");
     auto c = input.getPositional("mask");
     auto d = input.getPositional("subnetmask");
 
